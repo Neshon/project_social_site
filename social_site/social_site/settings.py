@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'users',
     'posts',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -105,7 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 
@@ -121,3 +122,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = Path(BASE_DIR, 'static')
+
+
+LOGIN_URL = "/auth/login/"
+LOGIN_REDIRECT_URL = "index"
+# LOGOUT_REDIRECT_URL = "index"
