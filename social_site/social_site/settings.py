@@ -33,6 +33,8 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'users',
     'posts',
+    'django.contrib.sites',
+    'django.contrib.flatpages',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -127,3 +129,6 @@ STATIC_ROOT = Path(BASE_DIR, 'static')
 LOGIN_URL = "/auth/login/"
 LOGIN_REDIRECT_URL = "index"
 # LOGOUT_REDIRECT_URL = "index"
+
+
+SITE_ID = 1
