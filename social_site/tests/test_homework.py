@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 from django.db.models import fields
 from django.template.loader import get_template
 
-
 try:
     from posts.models import Post
 except ImportError:
@@ -190,8 +189,3 @@ class TestGroupView:
             r'<\s*p(\s+class=".+"|\s*)>\s*' + post_with_group.text + r'\s*<\s*\/p\s*>',
             html
         ), 'Отредактируйте HTML-шаблон, не найден текст поста `<p>{{ текст_поста }}</p>`'
-
-        assert re.search(
-            r'(д|Д)ата публикации:\s*' + post_with_group.pub_date.strftime('%d %b %Y'),
-            html
-        ), 'Отредактируйте HTML-шаблон, не найдена дата публикации `дата публикации: {{ дата_публикации|date:"d M Y" }}`'
