@@ -25,7 +25,12 @@ SECRET_KEY = 'y3fh0xj0101q_o9&b5rl%fotg=l+(3@+*o(0&*&-j9ze5planw'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "[::1]",
+    "testserver",
+]
 
 
 # Application definition
@@ -33,6 +38,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'users',
     'posts',
+    'sorl.thumbnail',
     'django.contrib.sites',
     'django.contrib.flatpages',
     'django.contrib.admin',
@@ -124,6 +130,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = Path(BASE_DIR, 'static')
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = Path(BASE_DIR, 'media')
 
 
 LOGIN_URL = "/auth/login/"

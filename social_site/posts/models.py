@@ -28,3 +28,20 @@ class Post(models.Model):
                               related_name="posts",
                               blank=True,
                               null=True)
+    image = models.ImageField(upload_to="posts/", blank=True, null=True)
+
+
+class Comment(models.Model):
+    post = models.ForeignKey(Post,
+                             on_delete=models.CASCADE,
+                             blank=True,
+                             null=True,
+                             related_name="comments")
+    author = models.ForeignKey(User,
+                               on_delete=models.CASCADE,
+                               related_name="comments")
+    text = models.TextField(max_length=1000, null=True)
+    created = models.DateTimeField("date published", auto_now_add=True)
+
+    class Meta:
+        ordering = ["created"]
