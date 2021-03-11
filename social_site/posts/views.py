@@ -2,11 +2,13 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 
+from django.views.decorators.cache import cache_page
 
-from .models import Post, Group, User, Comment
+from .models import Post, Group, User, Follow
 from .forms import PostForm, CommentForm
 
 
+# @cache_page(20)
 def index(request):
     post_list = Post.objects.order_by("-pub_date").all()
     paginator = Paginator(post_list, 10)
@@ -44,6 +46,8 @@ def new_post(request):
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     post_list = Post.objects.filter(author=author.id).order_by("-pub_date").all()
+    followers = Follow.objects.filter(author=author).count()
+    following = Follow.objects.filter(user=author).count()
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get("page")
     page = paginator.get_page(page_number)
@@ -52,7 +56,9 @@ def profile(request, username):
                   {"author": author,
                    "page": page,
                    "post_list": post_list,
-                   "paginator": paginator})
+                   "paginator": paginator,
+                   "followers": followers,
+                   "following": following})
 
 
 def post_view(request, username, post_id):
@@ -101,9 +107,38 @@ def server_error(request):
 def add_comment(request, username, post_id):
     post = get_object_or_404(Post, id=post_id, author__username=username)
     form = CommentForm(request.POST or None)
+    items = post.comments.all()
     if form.is_valid():
         comment = form.save(commit=False)
         comment.post = post
         comment.author = request.user
         comment.save()
         return redirect('post', username=username, post_id=post_id)
+    return render(request, 'post.html', {'form': form, 'items': items, 'post': post})
+
+
+@login_required
+def follow_index(request):
+    # информация о текущем пользователе доступна в переменной request.user
+    favorite_posts = Post.objects.filter(author__following__user=request.user)
+    paginator = Paginator(favorite_posts, 10)
+    page_number = request.GET.get("page")
+    page = paginator.get_page(page_number)
+    return render(request,
+                  "follow.html",
+                  {"page": page, "paginator": paginator})
+
+
+@login_required
+def profile_follow(request, username):
+    author = get_object_or_404(User, username=username)
+    if request.user != author:
+        Follow.objects.get_or_create(user=request.user, author=author)
+    return redirect("profile", username=username)
+
+
+@login_required
+def profile_unfollow(request, username):
+    author = User.objects.get(username=username)
+    Follow.objects.filter(user=request.user, author=author).delete()
+    return redirect("profile", username=username)
