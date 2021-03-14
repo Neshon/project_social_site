@@ -1,46 +1,59 @@
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.urls import reverse
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 
-from django.views.decorators.cache import cache_page
+# from django.views.decorators.cache import cache_page
 
 from .models import Post, Group, User, Follow
 from .forms import PostForm, CommentForm
 
 
 # @cache_page(20)
-def index(request):
-    post_list = Post.objects.order_by("-pub_date").all()
-    paginator = Paginator(post_list, 10)
-    page_number = request.GET.get("page")
-    page = paginator.get_page(page_number)
-    return render(request,
-                  "index.html",
-                  {"page": page, "paginator": paginator})
+class PostsListView(ListView):
+    model = Post
+    template_name = "index.html"
+    paginate_by = 5
+    context_object_name = "posts"
 
 
-def group_posts(request, slug):
-    group = get_object_or_404(Group, slug=slug)
-    post_list = Post.objects.filter(group=group).order_by("-pub_date").all()
-    paginator = Paginator(post_list, 10)
-    page_number = request.GET.get("page")
-    page = paginator.get_page(page_number)
-    return render(request,
-                  "group.html",
-                  {"group": group, "page": page, "paginator": paginator})
+class GroupPostsListView(ListView):
+    model = Post
+    template_name = "group.html"
+    paginate_by = 5
+    context_object_name = "page"
+
+    def get_queryset(self):
+        group = get_object_or_404(Group, slug=self.kwargs['slug'])
+        post_list = Post.objects.filter(group=group).order_by("-pub_date").all()
+        return post_list
 
 
-@login_required
-def new_post(request):
-    if request.method == "POST":
-        form = PostForm(request.POST)
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.author = request.user
-            post.save()
-            return redirect('index')
-    form = PostForm()
-    return render(request, "new_post.html", {"form": form, "edit": False})
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model = Post
+    form_class = PostForm
+    template_name = "new_post.html"
+    extra_context = {
+        "edit": False
+    }
+
+    def form_valid(self, form):
+        post = form.save(commit=False)
+        post.author = self.request.user
+        post.save()
+        messages.add_message(
+            self.request,
+            messages.SUCCESS,
+            f"Пост добавлен",
+            extra_tags='success'
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("index")
 
 
 def profile(request, username):
@@ -61,38 +74,43 @@ def profile(request, username):
                    "following": following})
 
 
-def post_view(request, username, post_id):
-    # author = get_object_or_404(User, username=username)
-    # post = Post.objects.get(id=post_id)
-    post = get_object_or_404(Post, id=post_id, author__username=username)
-    count_post = Post.objects.filter(author=post.author).count()
-    form = CommentForm(instance=None)
-    items = post.comments.all()
-    return render(request,
-                  "post.html",
-                  {"author": post.author,
-                   "post": post,
-                   "form": form,
-                   "items": items,
-                   "count_post": count_post})
+class PostDetailView(DetailView):
+    model = Post
+    template_name = "post.html"
+    context_object_name = "post"
+    pk_url_kwarg = "post_id"
+    extra_context = {
+        "form": CommentForm(),
+    }
+
+    def get_queryset(self):
+        post = Post.objects.filter(id=self.kwargs['post_id'],
+                                   author__username=self.kwargs['username'])
+        return post
 
 
-@login_required
-def post_edit(request, username, post_id):
-    author = get_object_or_404(User, username=username)
-    post = get_object_or_404(Post, id=post_id)
-    # if request.user.username != post.author:
-    #     return redirect("profile", username=post.author)
-    if request.method == "POST":
-        form = PostForm(request.POST, files=request.FILES or None, instance=post)
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.save()
-            return redirect("post", username=author.username, post_id=post.id)
-    form = PostForm(instance=post)
-    return render(request,
-                  "new_post.html",
-                  {"form": form, "post": post, "edit": True})
+class PostUpdateView(LoginRequiredMixin, UpdateView):
+    model = Post
+    form_class = PostForm
+    template_name = "new_post.html"
+    pk_url_kwarg = "post_id"
+    extra_context = {
+        "edit": True
+    }
+
+    def get_context_data(self, **kwargs):
+        messages.add_message(
+            self.request,
+            messages.INFO,
+            f"Пост обновлен",
+            extra_tags='info'
+        )
+        return super().get_context_data(**kwargs)
+
+    @property
+    def success_url(self):
+        return reverse('post', kwargs={"username": self.object.author,
+                                       "post_id": self.object.id})
 
 
 def page_not_found(request, exception):

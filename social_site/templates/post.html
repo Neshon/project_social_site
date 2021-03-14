@@ -9,23 +9,23 @@
                     <div class="card">
                             <div class="card-body">
                                     <div class="h2">
-                                        {{ author.first_name }} {{ author.last_name }}
+                                        {{ post.author.first_name }} {{ post.author.last_name }}
                                     </div>
                                     <div class="h3 text-muted">
-                                         @{{ author.username }}
+                                         @{{ post.author.username }}
                                     </div>
                             </div>
                             <ul class="list-group list-group-flush">
                                     <li class="list-group-item">
                                             <div class="h6 text-muted">
-                                            Подписчиков: {{ followers }} <br />
-                                            Подписан: {{ following }}
+                                            Подписчиков: {{ post.author.follower.count }} <br />
+                                            Подписан: {{ post.author.following.count }}
                                             </div>
                                     </li>
                                     <li class="list-group-item">
                                             <div class="h6 text-muted">
                                                 <!--Количество записей -->
-                                                Записей: {{ count_post }}
+                                                Записей: {{ post.author.posts.count }}
                                             </div>
                                     </li>
                             </ul>
@@ -35,6 +35,13 @@
             <div class="col-md-9">
 
                 <!-- Пост -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
                 {% include "post_item.html" with post=post %}
                 {% include 'comments.html' %}
          </div>

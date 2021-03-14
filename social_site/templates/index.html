@@ -7,13 +7,19 @@
     {% include "menu.html" with index=True %}
 
         <h1>Последние обновления на сайте</h1>
-
-        {% for post in page %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% for post in posts %}
             {% include "post_item.html" with post=post %}
         {% endfor %}
 
-        {% if page.has_other_pages %}
-            {% include "paginator.html" with items=page paginator=paginator%}
+        {% if page_obj.has_other_pages %}
+            {% include "paginator.html" with items=page_obj paginator=paginator%}
         {% endif %}
 
     </div>
